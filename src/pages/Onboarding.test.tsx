@@ -1,5 +1,5 @@
 import React from "react";
-import { render, screen, waitFor } from "@testing-library/react";
+import {fireEvent, render, screen, waitFor} from "@testing-library/react";
 import {
   CompanyStep,
   OnboardingContext,
@@ -240,6 +240,47 @@ describe("Onboarding", () => {
     userEvent.click(nextButton);
     expect(textIndicator).not.toBeInTheDocument();
   }, 10000);
+
+  describe("grant-amount input", () => {
+    it("should have a value of 1000", () => {
+      const grantAmount = 1000;
+
+      const Router = getTestRouter("/grants");
+      render(
+          <Router>
+            <Page
+                initialState={{
+                  ...defaultOnboardingState,
+                  companyName: "My Company",
+                  shareholders: {
+                    0: {name: "Jenn", group: "founder", grants: [1], id: 0},
+                    1: {name: "Aaron", group: "employee", grants: [], id: 1},
+                    2: {name: "Sam", group: "investor", grants: [], id: 2},
+                  },
+                  grants: {
+                    1: {
+                      id: 1,
+                      name: "Initial issuance",
+                      amount: grantAmount,
+                      issued: Date.now().toLocaleString(),
+                      type: "common",
+                    },
+                  },
+                }}
+            />
+          </Router>,
+          {wrapper: ThemeWrapper}
+      );
+
+      const addGrantButton = screen.getByRole("button", { name: /Add Grant/ });
+      userEvent.click(addGrantButton);
+
+      const input = screen.getByTestId('grant-amount');
+      fireEvent.change(input, {target: {value: grantAmount.toString()}})
+
+      expect(input).toHaveValue(grantAmount.toString());
+    })
+  })
 
   it.todo("should persist onboard config");
 });
