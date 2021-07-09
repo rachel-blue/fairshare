@@ -193,7 +193,7 @@ describe("Dashboard", () => {
   });
 
   it("should show groups in groups chart", async () => {
-    const Router = getTestRouter("/dashboard/investor");
+    const Router = getTestRouter("/dashboard/group");
     const handlers = getHandlers(
       {
         company: { name: "My Company" },
@@ -246,6 +246,62 @@ describe("Dashboard", () => {
     const chart = await screen.findByRole("img");
     expect(within(chart).getByText(/founder/)).toBeInTheDocument();
     expect(within(chart).getByText(/investor/)).toBeInTheDocument();
+  });
+
+  it("should show share types in share types chart", async () => {
+    const Router = getTestRouter("/dashboard/share-type");
+    const handlers = getHandlers(
+        {
+          company: { name: "My Company" },
+          shareholders: {
+            0: { name: "Tonya", grants: [1, 2], group: "founder", id: 0 },
+            3: { name: "Timothy", grants: [6], group: "investor", id: 3 },
+          },
+          grants: {
+            1: {
+              id: 1,
+              name: "Initial Grant",
+              amount: 1000,
+              issued: Date.now().toLocaleString(),
+              type: "common",
+            },
+            2: {
+              id: 2,
+              name: "Incentive Package 2020",
+              amount: 500,
+              issued: Date.now().toLocaleString(),
+              type: "preferred",
+            },
+            6: {
+              id: 6,
+              name: "Series A Purchase",
+              amount: 500,
+              issued: Date.now().toLocaleString(),
+              type: "common",
+            },
+          },
+        },
+        false
+    );
+    server.use(...handlers);
+
+    render(
+        <Router>
+          <Routes>
+            <Route path="/dashboard/:mode" element={<Dashboard />} />
+          </Routes>
+        </Router>,
+        { wrapper: ThemeWrapper }
+    );
+
+    const typesChartButton = await screen.findByRole("link", {
+      name: /by share type/i,
+    });
+    userEvent.click(typesChartButton);
+
+    const chart = await screen.findByRole("img");
+    expect(within(chart).getByText(/common/)).toBeInTheDocument();
+    expect(within(chart).getByText(/preferred/)).toBeInTheDocument();
   });
 
   it("should allow adding new shareholders", async () => {

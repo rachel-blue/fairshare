@@ -269,13 +269,16 @@ export function ShareholderGrantsStep() {
 
             <FormControl>
               <Input
-                variant="flushed"
-                placeholder="Name"
-                data-testid="grant-name"
-                value={draftGrant.name}
-                onChange={(e) =>
-                  setDraftGrant((g) => ({ ...g, name: e.target.value }))
-                }
+                  variant="flushed"
+                  placeholder="Name"
+                  data-testid="grant-name"
+                  value={draftGrant.name}
+                  onChange={(e) =>
+                      setDraftGrant((g) => ({
+                        ...g,
+                        name: e.target.value,
+                      }))
+                  }
               />
             </FormControl>
             <FormControl>
@@ -292,6 +295,29 @@ export function ShareholderGrantsStep() {
                 }
               />
             </FormControl>
+
+            <FormControl>
+              <Input
+                  variant="flushed"
+                  data-testid="grant-type"
+                  value={draftGrant.name}
+              />
+
+              <Select
+                  placeholder="Type of Share"
+                  value={draftGrant.type}
+                  onChange={(e) =>
+                      setDraftGrant((g) => ({
+                        ...g,
+                        type: e.target.value as any,
+                      }))
+                  }
+              >
+                <option value="common">Common</option>
+                <option value="preferred">Preferred</option>
+              </Select>
+            </FormControl>
+
             <FormControl>
               <Input
                 variant="flushed"

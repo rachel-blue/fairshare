@@ -186,11 +186,13 @@ describe("Onboarding", () => {
     userEvent.click(addGrantButton);
 
     let grantNameInput = screen.getByTestId("grant-name");
+    let grantTypeInput = screen.getByTestId("grant-type");
     let grantAmountInput = screen.getByTestId("grant-amount");
     let grantDateInput = screen.getByTestId("grant-issued");
 
     await waitFor(() => {
       expect(grantNameInput).toBeVisible();
+      expect(grantTypeInput).toBeVisible();
     });
 
     userEvent.paste(grantNameInput, "2020 Incentive");

@@ -120,6 +120,31 @@ export function Dashboard() {
       .filter((e) => e.y > 0);
   }
 
+  function getShareTypeData() {
+    if (!shareholder.data || !grant.data) {
+      return [];
+    }
+
+    return ["common", "preferred"].map((type) => ({
+      x: type,
+      y: Object.values(grant?.data ?? {})
+          .filter((s) => s.type === type)
+          .reduce((acc, grant) => acc + grant.amount, 0),
+    }));
+  }
+
+  function pieDisplayMode() {
+    if (mode === "investor") {
+      return getInvestorData();
+    } else if (mode === "group") {
+      return getGroupData();
+    } else if (mode === "share-type") {
+      return getShareTypeData();
+    } else {
+      return [];
+    }
+  }
+
   async function submitNewShareholder(e: React.FormEvent) {
     e.preventDefault();
     await shareholderMutation.mutateAsync(newShareholder);
@@ -155,11 +180,21 @@ export function Dashboard() {
           >
             By Group
           </Button>
+          <Button
+              colorScheme="teal"
+              as={Link}
+              to="/dashboard/share-type"
+              data-testid="share-type-button"
+              variant="ghost"
+              isActive={mode === "share-type"}
+          >
+            By Share Type
+          </Button>
         </Stack>
       </Stack>
       <VictoryPie
         colorScale="blue"
-        data={mode === "investor" ? getInvestorData() : getGroupData()}
+        data={pieDisplayMode()}
       />
       <Stack divider={<StackDivider />}>
         <Heading>Shareholders</Heading>

@@ -85,7 +85,7 @@ describe("ShareholderPage", () => {
             name: "Incentive Package 2020",
             amount: 500,
             issued: "12/12/2012",
-            type: "common",
+            type: "preferred",
           },
         },
       },
@@ -114,14 +114,17 @@ describe("ShareholderPage", () => {
     userEvent.click(addGrantButton);
 
     const grantNameInput = screen.getByTestId("grant-name");
+    const grantTypeInput = screen.getByTestId("grant-type")
     const grantAmountInput = screen.getByTestId("grant-amount");
     const grantDateInput = screen.getByTestId("grant-issued");
 
     await waitFor(() => {
       expect(grantNameInput).toBeVisible();
+      expect(grantTypeInput).toBe('preferred');
     });
 
     userEvent.paste(grantNameInput, "Incentive Package 2019");
+    userEvent.paste(grantTypeInput, "common")
     userEvent.paste(grantAmountInput, "2000");
     userEvent.paste(grantDateInput, "2010-12-12");
 
@@ -132,6 +135,10 @@ describe("ShareholderPage", () => {
 
     const saveButton = screen.getByRole("button", { name: /Save/ });
     userEvent.click(saveButton);
+
+    await waitFor(() => {
+      expect(grantTypeInput).toBe('common');
+    });
 
     expect(
       await within(grantTable).findByRole("gridcell", {
