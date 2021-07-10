@@ -294,12 +294,10 @@ describe("Dashboard", () => {
         { wrapper: ThemeWrapper }
     );
 
-    const typesChartButton = await screen.findByRole("link", {
-      name: /by share type/i,
-    });
+    const typesChartButton = await screen.findByTestId("share-type-button");
     userEvent.click(typesChartButton);
 
-    const chart = await screen.findByRole("img");
+    const chart = await screen.findByTestId("pie-chart");
     expect(within(chart).getByText(/common/)).toBeInTheDocument();
     expect(within(chart).getByText(/preferred/)).toBeInTheDocument();
   });

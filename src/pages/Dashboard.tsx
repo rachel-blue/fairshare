@@ -192,10 +192,14 @@ export function Dashboard() {
           </Button>
         </Stack>
       </Stack>
-      <VictoryPie
-        colorScale="blue"
-        data={pieDisplayMode()}
-      />
+
+      <div data-testid="pie-chart">
+        <VictoryPie
+            colorScale="blue"
+            data={pieDisplayMode()}
+        />
+      </div>
+
       <Stack divider={<StackDivider />}>
         <Heading>Shareholders</Heading>
         <Table>

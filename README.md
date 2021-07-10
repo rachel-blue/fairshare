@@ -166,10 +166,9 @@ by priorities.
     - can either setup as part of the test structure instead of repeating
     - or test mock data with jest.mock() or jest.fn() and sample data instead of making real api calls
   - Single responsibility practices above would help the tests be more clean as well
-  
 
 ### 4 - Nice to Have
-- Edit shareholders
+- Edit Shareholders
   - ability to edit shareholder data
   - ability to remove shareholders
 - TODOs
