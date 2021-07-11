@@ -302,6 +302,59 @@ describe("Dashboard", () => {
     expect(within(chart).getByText(/preferred/)).toBeInTheDocument();
   });
 
+  it("should render the market cap", async () => {
+    const Router = getTestRouter("/dashboard/share-type");
+    const handlers = getHandlers(
+        {
+          company: { name: "My Company" },
+          shareholders: {
+            0: { name: "Tonya", grants: [1, 2], group: "founder", id: 0 },
+            3: { name: "Timothy", grants: [6], group: "investor", id: 3 },
+          },
+          grants: {
+            1: {
+              id: 1,
+              name: "Initial Grant",
+              amount: 1000,
+              issued: Date.now().toLocaleString(),
+              type: "common",
+            },
+            2: {
+              id: 2,
+              name: "Incentive Package 2020",
+              amount: 500,
+              issued: Date.now().toLocaleString(),
+              type: "preferred",
+            },
+            6: {
+              id: 6,
+              name: "Series A Purchase",
+              amount: 500,
+              issued: Date.now().toLocaleString(),
+              type: "common",
+            },
+          },
+        },
+        false
+    );
+    server.use(...handlers);
+
+    render(
+        <Router>
+          <Routes>
+            <Route path="/dashboard/:mode" element={<Dashboard />} />
+          </Routes>
+        </Router>,
+        { wrapper: ThemeWrapper }
+    );
+
+    const typesChartButton = await screen.findByTestId("share-type-button");
+    userEvent.click(typesChartButton);
+    const marketCap = await screen.getByTestId("market-cap");
+
+    expect(marketCap).toBeVisible();
+  })
+
   it("should allow adding new shareholders", async () => {
     const Router = getTestRouter("/dashboard");
     const handlers = getHandlers(

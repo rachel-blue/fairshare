@@ -36,3 +36,8 @@
     transform: rotate(360deg);
   }
 }
+
+/* I know this should be in a local CSS file, but for the sake of speed */
+.VictoryContainer svg {
+  overflow: visible;
+}

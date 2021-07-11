@@ -301,6 +301,12 @@ export function ShareholderGrantsStep() {
                   variant="flushed"
                   data-testid="grant-type"
                   value={draftGrant.name}
+                  onChange={(e) => {
+                    setDraftGrant((g) => ({
+                      ...g,
+                      name: e.target.name,
+                    }));
+                  }}
               />
 
               <Select

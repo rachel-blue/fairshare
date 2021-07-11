@@ -174,7 +174,7 @@ export function ShareholderPage() {
                   <Td>{new Date(issued).toLocaleDateString()}</Td>
                   <Td>{amount}</Td>
                   <Td>{type}</Td>
-                  <Td></Td>
+                  <Td>{}</Td>
                 </Tr>
               );
             }

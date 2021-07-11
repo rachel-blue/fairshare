@@ -202,7 +202,7 @@ describe("Onboarding", () => {
     const saveButton = screen.getByRole("button", { name: /Save/ });
     userEvent.click(saveButton);
 
-    expect(screen.getByText("2020 Incentive")).toBeInTheDocument();
+    expect(screen.getByText(/2020 Incentive/)).toBeInTheDocument();
 
     let nextButton = screen.getByRole("link", { name: /Next/ });
     userEvent.click(nextButton);

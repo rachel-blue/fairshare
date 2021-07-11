@@ -1,4 +1,4 @@
-import React from "react";
+import React, {useCallback, useEffect} from "react";
 import { VictoryPie } from "victory";
 import { Link, useParams } from "react-router-dom";
 import { ArrowForwardIcon } from "@chakra-ui/icons";
@@ -22,6 +22,9 @@ import {
   AlertTitle,
   AlertIcon,
   Select,
+  FormControl,
+  FormLabel,
+  Flex,
 } from "@chakra-ui/react";
 import { Grant, Shareholder } from "../types";
 import { useMutation, useQuery, useQueryClient } from "react-query";
@@ -33,6 +36,11 @@ export function Dashboard() {
   const [newShareholder, setNewShareholder] = React.useState<
     Omit<Shareholder, "id" | "grants">
   >({ name: "", group: "employee" });
+  const [commonShareVal, setCommonShareVal] = React.useState(1);
+  const [preferredShareVal, setPreferredShareVal] = React.useState(5);
+  const [marketCap, setMarketCap] = React.useState(0);
+  const [displayValueOfShares, setDisplayValueOfShares] = React.useState<'number' | 'value'>("number");
+  const [chart, setChart] = React.useState<any[]>([]);
   const { mode } = useParams();
 
   const shareholderMutation = useMutation<
@@ -66,33 +74,25 @@ export function Dashboard() {
   const grant = useQuery<{ [dataID: number]: Grant }>("grants", () =>
     fetch("/grants").then((e) => e.json())
   );
+
   const shareholder = useQuery<{ [dataID: number]: Shareholder }>(
     "shareholders",
     () => fetch("/shareholders").then((e) => e.json())
   );
 
-  if (grant.status === "error") {
-    return (
-      <Alert status="error">
-        <AlertIcon />
-        <AlertTitle>Error: {grant.error}</AlertTitle>
-      </Alert>
-    );
-  }
-  if (grant.status !== "success") {
-    return <Spinner />;
-  }
-  if (!grant.data || !shareholder.data) {
-    return (
-      <Alert status="error">
-        <AlertIcon />
-        <AlertTitle>Failed to get any data</AlertTitle>
-      </Alert>
-    );
-  }
+  const getGrantShareValue = useCallback((grant: Grant) => {
+    let shareValue = 1;
+    if (displayValueOfShares === 'value') {
+      let shareTypeValue = grant.type === 'common' ? commonShareVal : preferredShareVal;
+      if (isNaN(shareTypeValue)) shareTypeValue = 0;
+      shareValue = shareTypeValue;
+    }
+
+    return shareValue;
+  }, [displayValueOfShares, commonShareVal, preferredShareVal]);
 
   // TODO: why are these inline?
-  function getGroupData() {
+  const getGroupData = useCallback(() => {
     if (!shareholder.data || !grant.data) {
       return [];
     }
@@ -101,11 +101,11 @@ export function Dashboard() {
       y: Object.values(shareholder?.data ?? {})
         .filter((s) => s.group === group)
         .flatMap((s) => s.grants)
-        .reduce((acc, grantID) => acc + grant.data[grantID].amount, 0),
+        .reduce((acc, grantID) => acc + grant.data[grantID].amount * getGrantShareValue(grant.data[grantID]), 0),
     }));
-  }
+  }, [shareholder.data, grant.data, getGrantShareValue]);
 
-  function getInvestorData() {
+  const getInvestorData = useCallback(() => {
     if (!shareholder.data || !grant.data) {
       return [];
     }
@@ -113,14 +113,14 @@ export function Dashboard() {
       .map((s) => ({
         x: s.name,
         y: s.grants.reduce(
-          (acc, grantID) => acc + grant.data[grantID].amount,
+          (acc, grantID) => acc + grant.data[grantID].amount * getGrantShareValue(grant.data[grantID]),
           0
         ),
       }))
       .filter((e) => e.y > 0);
-  }
+  }, [shareholder.data, grant.data, getGrantShareValue]);
 
-  function getShareTypeData() {
+  const getShareTypeData = useCallback(() => {
     if (!shareholder.data || !grant.data) {
       return [];
     }
@@ -129,26 +129,62 @@ export function Dashboard() {
       x: type,
       y: Object.values(grant?.data ?? {})
           .filter((s) => s.type === type)
-          .reduce((acc, grant) => acc + grant.amount, 0),
+          .reduce((acc, grant) => acc + grant.amount * getGrantShareValue(grant), 0),
     }));
-  }
+  }, [shareholder.data, grant.data, getGrantShareValue]);
 
-  function pieDisplayMode() {
-    if (mode === "investor") {
-      return getInvestorData();
-    } else if (mode === "group") {
-      return getGroupData();
-    } else if (mode === "share-type") {
-      return getShareTypeData();
-    } else {
-      return [];
+  useEffect(() => {
+    if (!shareholder.data || !grant.data) {
+      return;
     }
-  }
+
+    const newMarketCap = Object.values(grant?.data ?? {})
+      .reduce((acc, grant) => {
+        let shareTypeValue = grant.type === 'common' ? commonShareVal : preferredShareVal;
+        if (isNaN(shareTypeValue)) shareTypeValue = 0;
+
+        return acc + (shareTypeValue * grant.amount);
+      }, 0);
+
+    setMarketCap(newMarketCap);
+  }, [shareholder.data, grant.data, commonShareVal, preferredShareVal]);
+
+  useEffect(() => {
+    if (mode === "investor") {
+      setChart(getInvestorData());
+    } else if (mode === "group") {
+      setChart(getGroupData());
+    } else if (mode === "share-type") {
+      setChart(getShareTypeData());
+    } else {
+      setChart([]);
+    }
+  }, [mode, getGroupData, getInvestorData, getShareTypeData]);
 
   async function submitNewShareholder(e: React.FormEvent) {
     e.preventDefault();
     await shareholderMutation.mutateAsync(newShareholder);
     onClose();
+  }
+
+  if (grant.status === "error") {
+    return (
+        <Alert status="error">
+          <AlertIcon />
+          <AlertTitle>Error: {grant.error}</AlertTitle>
+        </Alert>
+    );
+  }
+  if (grant.status !== "success") {
+    return <Spinner />;
+  }
+  if (!grant.data || !shareholder.data) {
+    return (
+        <Alert status="error">
+          <AlertIcon />
+          <AlertTitle>Failed to get any data</AlertTitle>
+        </Alert>
+    );
   }
 
   return (
@@ -161,44 +197,105 @@ export function Dashboard() {
         >
           Fair Share
         </Heading>
-        <Stack direction="row">
-          <Button
-            colorScheme="teal"
-            as={Link}
-            to="/dashboard/investor"
-            variant="ghost"
-            isActive={mode === "investor"}
-          >
-            By Investor
-          </Button>
-          <Button
-            colorScheme="teal"
-            as={Link}
-            to="/dashboard/group"
-            variant="ghost"
-            isActive={mode === "group"}
-          >
-            By Group
-          </Button>
-          <Button
-              colorScheme="teal"
-              as={Link}
-              to="/dashboard/share-type"
-              data-testid="share-type-button"
-              variant="ghost"
-              isActive={mode === "share-type"}
-          >
-            By Share Type
-          </Button>
-        </Stack>
+
+        <div>
+          <Stack direction="row" paddingBottom="20px">
+            <Button
+                colorScheme="teal"
+                as={Link}
+                to="/dashboard/investor"
+                variant="ghost"
+                isActive={mode === "investor"}
+            >
+              By Investor
+            </Button>
+            <Button
+                colorScheme="teal"
+                as={Link}
+                to="/dashboard/group"
+                variant="ghost"
+                isActive={mode === "group"}
+            >
+              By Group
+            </Button>
+            <Button
+                colorScheme="teal"
+                as={Link}
+                to="/dashboard/share-type"
+                data-testid="share-type-button"
+                variant="ghost"
+                isActive={mode === "share-type"}
+            >
+              By Share Type
+            </Button>
+          </Stack>
+
+          <Flex>
+            <Button
+              flex="1"
+              onClick={(e) => setDisplayValueOfShares("number")}
+              isActive={displayValueOfShares === "number"}
+            >
+              Number of Shares
+            </Button>
+
+            <Button
+              flex="1"
+              onClick={(e) => setDisplayValueOfShares("value")}
+              isActive={displayValueOfShares === "value"}
+            >
+              Value of Shares
+            </Button>
+          </Flex>
+        </div>
+
       </Stack>
 
       <div data-testid="pie-chart">
         <VictoryPie
             colorScale="blue"
-            data={pieDisplayMode()}
+            data={chart}
         />
       </div>
+
+      <Stack data-testid="market-cap">
+        <Heading
+          as="h4"
+          size="lg"
+        >
+          Market Cap: {marketCap}
+        </Heading>
+
+        <FormControl>
+          <Flex>
+            <FormLabel flex="1">
+              <span>Common Share value: </span>
+              {isNaN(commonShareVal) ? 0 : commonShareVal}
+            </FormLabel>
+            <Input
+                flex="1"
+                type="number"
+                value={commonShareVal}
+                onChange={(e) => setCommonShareVal(parseInt(e.target.value, 10))}
+            />
+          </Flex>
+        </FormControl>
+
+        <FormControl>
+          <Flex>
+            <FormLabel flex="1">
+              <span>Preferred Share value: </span>
+              {isNaN(preferredShareVal) ? 0 : preferredShareVal}
+            </FormLabel>
+            <Input
+              flex="1"
+              type="number"
+              value={preferredShareVal}
+              onChange={(e) => setPreferredShareVal(parseInt(e.target.value, 10))}
+            />
+          </Flex>
+        </FormControl>
+      </Stack>
 
       <Stack divider={<StackDivider />}>
         <Heading>Shareholders</Heading>

@@ -118,65 +118,70 @@ This section will be broken up into bugs found while using the app, code issues,
 architecture/component abstraction, and testing refactor notes. They will also be listed 
 by priorities.
 
+Due to time concerns I mostly followed existing design patterns in the code base to complete my tasks.
+
 ## Breakdown
-- **1 = critical path** - must be fixed for the application to be acceptably usable
-- **2 = secondary concern** - still important for usability, would improve app reliability or user experience
-- **3 = code quality** - larger changes that would improve the developers ability to edit and maintain the code base
-- **4 = nice to have** - would be fixed in an ideal world but not as crucial or beneficial as the other tasks and therefore not a priority
+- **1 = Critical Path** - must be fixed for the application to be acceptably usable
+- **2 = Secondary Concern** - still important for usability, would improve app reliability or user experience
+- **3 = Code Quality** - larger changes that would improve the developers ability to edit and maintain the code base
+- **4 = Nice to Have** - would be fixed in an ideal world but not as crucial or beneficial as the other tasks and therefore not a priority
 
 ### 1 - Critical Path
 - Sign in
-  - could't even test the sign in page because of the inability to navigate to it.
-    Reroutes to dashboard if a user persists in local storage, and doesn't save login credentials if there isn't a user in local storage
+  - Could't even test the sign in page because of the inability to navigate to it. Reroutes to dashboard if a user persists in local storage, and doesn't save login credentials if there isn't a user in local storage
   - Needs Ability to sign out from dashboard
 - Dashboard
-  - visual display bugs
-    - clipping of text on the left and right of pie graph
-    - overlapping of text when there is no grant/share data to push the text apart
+  - Visual display bugs
+    - Clipping of text on the left and right of pie graph
+    - Overlapping of text when there is no grant/share data to push the text apart
 - Grants
-  - missing ability to edit grants 
-  - missing ability to delete grants
+  - Missing ability to edit grants 
+  - Missing ability to delete grants
 - Shareholders page
-  - needs navigation back to dashboard
+  - Needs navigation back to dashboard
 
 ### 2 - Secondary Concern
 - Form validation
-  - "type of shareholder" should not be selectable
-  - "type of share" should not be selectable
+  - `type of shareholder` should not be selectable
+  - `type of share` should not be selectable
   - should not be able to submit without critical content
 - Failing test (skipped)
   - On startup the test suite had one failing test, needs heavy re-work and for now I skipped that test with a @TODO note
 
-### 3 - Code Quality
+### 3 - Code Quality / Architecture
 - Single responsibility
   - Most components are violating single responsibility and this makes them difficult to test
   - A few functions I would break off into seperate files because the logic is re-used in multiple places (DRY)
-    - submitNewShareholder()
-    - ShareholderGrantsStep()
+    - `submitNewShareholder()`
+    - `shareholderGrantsStep()`
     - Form for adding a new grant
   - Abstraction of functionality to follow single responsibility would also allow for easier expansion of features in the future
 - Test structure
-  - Currently no file setup or BeforeEach/AfterEach 
+  - Currently, no file setup or BeforeEach/AfterEach 
     - The setup logic is repeated for each test where it is needed. This should be in the setup for the test 
     file as a whole, or in a beforeEach in the describe block
   - Multiple expects per test
-    - multiple expect statements are not best practice
-    - one expect per test keeps the tests smaller and easier to identify in the report what broke, why, and where
+    - Multiple expect statements are not best practice
+    - One expect per test keeps the tests smaller and easier to identify in the report what broke, why, and where
   - Timeouts
-    - can either setup as part of the test structure instead of repeating
-    - or test mock data with jest.mock() or jest.fn() and sample data instead of making real api calls
+    - Can either setup as part of the test structure instead of repeating
+    - Or test mock data with `jest.mock()` or `jest.fn()` and sample data instead of making real api calls
   - Single responsibility practices above would help the tests be more clean as well
+- Package.json
+  - Husky, testing utilities, and linting should be dev dependencies
+  - Separating out dev dependencies would decrease build times
+  - Packages need to be audited for usage. For example zustand is never used in the project
 
 ### 4 - Nice to Have
 - Edit Shareholders
-  - ability to edit shareholder data
-  - ability to remove shareholders
+  - Ability to edit shareholder data
+  - Ability to remove shareholders
 - TODOs
-  - multiple @TODOs throughout the application code point out good fixes that need to be made to clean up the codebase.
+  - Multiple @TODOs throughout the application code point out good fixes that need to be made to clean up the codebase
 - Brittle tests
-  - getByRole() and other similar structures create brittle tests that are easily broken 
-    if the role, classname, or other attribute is altered. It is better practice to use getByTestId()
-    since the data-testid attribute is only used in refernce for tests
+  - `getByRole()` and other similar structures create brittle tests that are easily broken 
+    if the role, classname, or other attribute is altered. It is better practice to use `getByTestId()`
+    since the `data-testid` attribute is only used in reference for tests
 
 
 ## Summary
